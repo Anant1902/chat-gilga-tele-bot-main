@@ -57,7 +57,7 @@ bot.on('message', async (msg) => {
     });
 
     var aiResponse;
-    con.query('SELECT userMessage, robotMessage FROM messages WHERE teleID=?',
+    con.query('SELECT userMessage, robotMessage FROM messages WHERE teleID=? && timeStamp > now() - INTERVAL 1 day',
             [user_id], async function (err, result, fields) {
         if(err) console.log(err);
         let msgArr = [];
