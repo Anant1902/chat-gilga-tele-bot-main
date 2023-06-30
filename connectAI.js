@@ -13,7 +13,6 @@ async function connectAI(msgs) {
         messages: msgs
     }).then((aiResponse) => {
         const responseText = aiResponse.data.choices[0].message.content;
-        console.log(msgs);
         return responseText;
     }).catch((error) => console.log(error));
 }

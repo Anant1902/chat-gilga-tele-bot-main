@@ -26,23 +26,27 @@ const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.tele_API_token;
 const bot = new TelegramBot(token, {polling: true});
 
-let messages = []
+let messages = {};
+
 let id = '';
 
 bot.on('message', async (msg) => {
+    let user_id = msg.from.id;
     let incoming_msg = msg.text.toString()
     let firstName = msg.from.first_name;
     let secondName = msg.from.last_name;
     let userName = msg.from.username;
+    let teleData = JSON.stringify(msg);
 
 
-    con.query( 'INSERT INTO users (firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
-            [firstName, secondName, userName], function (err, result, fields) {
+    con.query( 'INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
+            [user_id, firstName, secondName, userName], function (err, result, fields) {
         if(err) console.log(err);
         console.log("1 user record inserted");
     });
 
-    con.query("INSERT INTO messages (username, userMessage, timeStamp, robotMessage) VALUES ( ?, ?, NOW(), null)", [userName, incoming_msg], function (err, result) {
+    con.query("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
+            [user_id, userName, incoming_msg, teleData], function (err, result) {
         if(err) console.log(err);
         console.log("1 user message record inserted");
         con.query("SELECT LAST_INSERT_ID() AS id", function (err, result) {
@@ -51,25 +55,44 @@ bot.on('message', async (msg) => {
             console.log("Last insert id recorded");
         });
     });
-    
-    messages.push({
-        role: "user",
-        content: incoming_msg
-    })
 
-    const ans = await connectAI(messages);
-    messages.push({
-        role: "assistant",
-        content: ans
-    })
- 
-    con.query("UPDATE  messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id], function (err, result, fields) {
+    var aiResponse;
+    con.query('SELECT userMessage, robotMessage FROM messages WHERE teleID=?',
+            [user_id], async function (err, result, fields) {
         if(err) console.log(err);
-        console.log("1 ai message record inserted");
-    });
+        let msgArr = [];
+        result.filter((msg, index) => index !== result.length - 1).map((msg) => {
+            msgArr = msgArr.concat(
+            [{
+                role: "user",
+                content: msg.userMessage
+            },
+            {
+                role: "assistant",
+                content: msg.robotMessage   
+            }]);
+        })
+        msgArr.push(
+            {
+                role: "user",
+                content: result[result.length - 1].userMessage
+            }
+        );
+        console.log(msgArr);
+        const ans = await connectAI(msgArr);
+        console.log(ans);
 
-    bot.sendMessage(msg.chat.id, ans);
+        con.query("UPDATE  messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id], function (err, result, fields) {
+            if(err) console.log(err);
+            console.log("1 ai message record inserted");
+        });
+        bot.sendMessage(msg.chat.id, ans);
+        });
 });
+
+
+
+
 
 
 cron.schedule('10 * * * * *', function() {
