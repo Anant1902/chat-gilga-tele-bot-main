@@ -36,10 +36,11 @@ app.post("/", bodyParser.json(), async (req, res) => {
           });
 
         try {
- 
             const bot = new TelegramBot(process.env.tele_API_token);
+
             const { body } = req;
             const msg = body.message;
+            await bot.sendMessage(msg.chat.id, 'can hear you');
             
             if (msg) {
 
