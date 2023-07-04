@@ -10,6 +10,12 @@ const bodyParser = require('body-parser');
 app.use(express.static('public'))
 
 
+app.get("/", (req, res) => {
+    res.json({
+        data: "Home Page"
+    })
+});
+
 app.post("/", bodyParser.json(), async (req, res) => {
     try {
         var con = mysql.createConnection({
