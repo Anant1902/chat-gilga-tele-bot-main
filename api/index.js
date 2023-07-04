@@ -3,7 +3,7 @@ const app = express();
 const port = 3003;
 const { connectAI } = require('../connectAI');
 require('dotenv').config();
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser');
 
