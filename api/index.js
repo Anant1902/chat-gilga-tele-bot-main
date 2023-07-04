@@ -33,7 +33,8 @@ app.post("/", bodyParser.json(), async (req, res) => {
             host: process.env.db_host,
             user: process.env.db_user,
             password: process.env.db_pass,
-            database: process.env.db_db
+            database: process.env.db_db,
+            port: 3306
           });
           
           con.connect(async function(err) {
