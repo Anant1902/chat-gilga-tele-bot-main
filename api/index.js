@@ -54,7 +54,6 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 con.query( 'INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
                         [user_id, firstName, secondName, userName], function (err, result, fields) {
                     if(err) console.log(err);
-                    console.log("1 user record inserted");
                 });
 
                 con.query("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
@@ -64,7 +63,6 @@ app.post("/", bodyParser.json(), async (req, res) => {
                     con.query("SELECT LAST_INSERT_ID() AS id", function (err, result) {
                         if(err) console.log(err);
                         id = result[0].id.toString();
-                        console.log("Last insert id recorded");
                     });
                 });
 
@@ -89,13 +87,10 @@ app.post("/", bodyParser.json(), async (req, res) => {
                             content: result[result.length - 1].userMessage
                         }
                     );
-                    console.log(msgArr);
                     const ans = await connectAI(msgArr);
-                    console.log(ans);
 
                     con.query("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id], function (err, result, fields) {
                         if(err) console.log(err);
-                        console.log("1 ai message record inserted");
                     })
                     await bot.sendMessage(msg.chat.id, ans);
                     });
