@@ -6,6 +6,7 @@ require('dotenv').config();
 const mysql = require('mysql2');
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser');
+const { getSystemErrorMap } = require('util');
 
 app.use(express.static('public'))
 
@@ -21,13 +22,15 @@ app.get("/test", (req, res) => {
     })
 });
 
+
 app.post("/", bodyParser.json(), async (req, res) => {
     try {
+
         var con = mysql.createConnection({
-            host: "134.209.103.126",
-            user: "anant",
-            password: "uXkcYva4as",
-            database: "ai_chat"
+            host: process.env.db_host,
+            user: process.env.db_user,
+            password: process.env.db_pass,
+            database: process.env.db_db
           });
           
           con.connect(function(err) {
@@ -40,8 +43,9 @@ app.post("/", bodyParser.json(), async (req, res) => {
 
             const { body } = req;
             const msg = body.message;
-            await bot.sendMessage(msg.chat.id, 'can hear you');
-            
+            // await bot.sendMessage(msg.chat.id, 'can hear you');
+            // the above test code is working
+
             if (msg) {
 
                 let user_id = msg.from.id;
@@ -52,9 +56,10 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 let teleData = JSON.stringify(msg);
 
 
-                con.query( 'INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
-                        [user_id, firstName, secondName, userName], function (err, result, fields) {
-                    if(err) console.log(err);
+                con.query( 'INSERT INTO users (teleID, firstName, secondName, usgerName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
+                        [user_id, firstName, secondName, userName], async function (err, result, fields) {
+                    if(err) {await bot.sendMessage(msg.chat.id, 'db connect error')
+                    } else {bot.sendMessage(msg.chat.id, 'db working ')};
                 });
 
                 con.query("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
@@ -115,7 +120,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        return res.status(500).send("Server error");
+        return res.status(200).send("DB connect error");
     }
 });
 
