@@ -61,6 +61,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
                     if(err) {await bot.sendMessage(msg.chat.id, 'db connect error')
                     } else {bot.sendMessage(msg.chat.id, 'db working ')};
                 });
+                await bot.sendMessage(msg.chat.id, 'outside connection');
 
                 con.query("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
                         [user_id, userName, incoming_msg, teleData], function (err, result) {
