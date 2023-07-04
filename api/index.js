@@ -85,10 +85,9 @@ app.post("/", bodyParser.json(), async (req, res) => {
                     con.query("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id], function (err, result, fields) {
                         if(err) console.log(err);
                         console.log("1 ai message record inserted");
-                    });
+                    })
                     await bot.sendMessage(msg.chat.id, ans);
                     });
-                    // await bot.sendMessage(id, message, {parse_mode: 'Markdown'});
                 } else {
                 res.json({
                     status: "no data sent"
