@@ -6,7 +6,6 @@ require('dotenv').config();
 const mysql = require('mysql2');
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser');
-const { getSystemErrorMap } = require('util');
 
 app.use(express.static('public'))
 
@@ -29,18 +28,17 @@ app.post("/", bodyParser.json(), async (req, res) => {
         const { body } = req;
         const msg = body.message;
 
-        var pool = mysql.createPool({
+        var con = mysql.createConnection({
             host: process.env.db_host,
             user: process.env.db_user,
             password: process.env.db_pass,
             database: process.env.db_db,
             port: process.env.PORT,
             waitForConnections: true,
-            connectionLimit: 10,
             queueLimit: 0
           });
           
-          pool.getConnection(async function(err, con) {
+          con.connect(async function(err, con) {
               if (err) await bot.sendMessage(msg.chat.id, 'db cannot connect');
               await bot.sendMessage(msg.chat.id, 'db connected');
           });
@@ -58,23 +56,23 @@ app.post("/", bodyParser.json(), async (req, res) => {
 
                 await bot.sendMessage(msg.chat.id, 'can hear you say: ' + incoming_msg);
 
-                pool.query( 'INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
+                con.query( 'INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
                         [user_id, firstName, secondName, userName], async function (err, result, fields) {
                     if(err) {await bot.sendMessage(msg.chat.id, err)
                     } else {bot.sendMessage(msg.chat.id, 'db working ')};
                 });
 
-                pool.query("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
+                con.query("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
                         [user_id, userName, incoming_msg, teleData], async function (err, result) {
                     if(err) console.log(err);
                     console.log("1 user message record inserted");
-                    pool.query("SELECT LAST_INSERT_ID() AS id", function (err, result) {
+                    con.query("SELECT LAST_INSERT_ID() AS id", function (err, result) {
                         if(err) console.log(err);
                         id = result[0].id.toString();
                     });
                 });
 
-                pool.query('SELECT userMessage, robotMessage FROM messages WHERE teleID=? && timeStamp > now() - INTERVAL 1 day',
+                con.query('SELECT userMessage, robotMessage FROM messages WHERE teleID=? && timeStamp > now() - INTERVAL 1 day',
                         [user_id], async function (err, result, fields) {
                     if(err) console.log(err);
                     let msgArr = [];
@@ -98,7 +96,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
                     console.log(msgArr);
                     const ans = await connectAI(msgArr);
 
-                    pool.query("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id], function (err, result, fields) {
+                    con.query("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id], function (err, result, fields) {
                         if(err) console.log(err);
                     })
                     await bot.sendMessage(msg.chat.id, ans);
