@@ -27,17 +27,17 @@ app.post("/", bodyParser.json(), async (req, res) => {
         const bot = new TelegramBot(process.env.tele_API_token);
         const { body } = req;
         const msg = body.message;
-
+        
         const con = await mysql.createConnection({
-            host: process.env.db_host,
-            user: process.env.db_user,
-            password: process.env.db_pass,
-            database: process.env.db_db,
-            port: process.env.PORT,
-            waitForConnections: true,
-            queueLimit: 0,
-            connectTimeout: 1000000
-        });
+                host: process.env.db_host,
+                user: process.env.db_user,
+                password: process.env.db_pass,
+                database: process.env.db_db,
+                port: process.env.PORT,
+                waitForConnections: true,
+                queueLimit: 0,
+                connectTimeout: 1000000
+            });
           
         await con.connect(async function(err, con) {
             if (err) await bot.sendMessage(msg.chat.id, 'db cannot connect');
@@ -57,58 +57,52 @@ app.post("/", bodyParser.json(), async (req, res) => {
 
                 await bot.sendMessage(msg.chat.id, 'can hear you say: ' + incoming_msg);
 
-                await con.query( 'INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
-                        [user_id, firstName, secondName, userName], async function (err, result, fields) {
-                    if(err) {await bot.sendMessage(msg.chat.id, err)
-                    } else {bot.sendMessage(msg.chat.id, 'db working ')};
+                try {
+                await con.execute('INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
+                        [user_id, firstName, secondName, userName]);
+                bot.sendMessage(msg.chat.id, '1 user id record inserted')
+                } catch (error) {console.log("Execution error: " + error)};
+
+                await con.execute("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
+                        [user_id, userName, incoming_msg, teleData]);
+                bot.sendMessage(msg.chat.id, "1 user message record inserted");
+
+                const [result, field] =  await con.execute("SELECT LAST_INSERT_ID() AS id");
+                const id = result[0].id.toString();
+
+                const [msgResult, fields] = await con.execute('SELECT userMessage, robotMessage FROM messages WHERE teleID=? && timeStamp > now() - INTERVAL 1 day',
+                        [user_id]);
+                console.log(msgResult);
+                let msgArr = [];
+                msgResult.filter((msg, index) => index !== msgResult.length - 1).map((msg) => {
+                    msgArr = msgArr.concat(
+                    [{
+                        role: "user",
+                        content: msg.userMessage
+                    },
+                    {
+                        role: "assistant",
+                        content: msg.robotMessage   
+                    }]);
                 });
+                msgArr.push(
+                    {
+                        role: "user",
+                        content: msgResult[msgResult.length - 1].userMessage
+                    }
+                );
+                console.log(msgArr);
+                const ans = await connectAI(msgArr);
 
-                await con.query("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
-                        [user_id, userName, incoming_msg, teleData], async function (err, result) {
-                    if(err) console.log(err);
-                    console.log("1 user message record inserted");
-                    await con.query("SELECT LAST_INSERT_ID() AS id", function (err, result) {
-                        if(err) console.log(err);
-                        id = result[0].id.toString();
-                    });
-                });
-
-                await con.query('SELECT userMessage, robotMessage FROM messages WHERE teleID=? && timeStamp > now() - INTERVAL 1 day',
-                        [user_id], async function (err, result, fields) {
-                    if(err) console.log(err);
-                    let msgArr = [];
-                    result.filter((msg, index) => index !== result.length - 1).map((msg) => {
-                        msgArr = msgArr.concat(
-                        [{
-                            role: "user",
-                            content: msg.userMessage
-                        },
-                        {
-                            role: "assistant",
-                            content: msg.robotMessage   
-                        }]);
-                    })
-                    msgArr.push(
-                        {
-                            role: "user",
-                            content: result[result.length - 1].userMessage
-                        }
-                    );
-                    console.log(msgArr);
-                    const ans = await connectAI(msgArr);
-
-                    await con.query("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id], function (err, result, fields) {
-                        if(err) console.log(err);
-                    })
-                    await bot.sendMessage(msg.chat.id, ans);
-                    });
-                } else {
+                await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]);
+                bot.sendMessage(msg.chat.id, ans);
+                await con.end();
+            } else {
                 res.json({
                     status: "no data sent"
                 })
             }
-        }
-        catch(error) {
+        } catch(error) {
             // If there was an error sending our message then we 
             // can log it into the Vercel console
             console.error('Error sending message');
