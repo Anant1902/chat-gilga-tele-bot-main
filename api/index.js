@@ -38,11 +38,6 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 queueLimit: 0,
                 connectTimeout: 1000000
             });
-          
-        await con.connect(async function(err, con) {
-            if (err) await bot.sendMessage(msg.chat.id, 'db cannot connect');
-            await bot.sendMessage(msg.chat.id, 'db connected');
-        });
 
         try {
     
@@ -90,8 +85,11 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 console.log(msgArr);
                 const ans = await connectAI(msgArr);
 
-                await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]);
-                bot.sendMessage(msg.chat.id, ans);
+                await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]).then(
+                    async () => {
+                        await bot.sendMessage(msg.chat.id, ans);
+                    }
+                );
                 await con.end();
             } else {
                 res.json({
