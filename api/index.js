@@ -65,7 +65,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
                         [user_id]);
                 console.log(msgResult);
                 let msgArr = [];
-                msgResult.filter((msg, index) => index !== msgResult.length - 1).map((msg) => {
+                msgResult.filter((msg, index) => index !== msgResult.length - 1 && msg.robotMessage !== null).map((msg) => {
                     msgArr = msgArr.concat(
                     [{
                         role: "user",
