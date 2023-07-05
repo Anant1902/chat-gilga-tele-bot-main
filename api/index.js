@@ -46,7 +46,6 @@ app.post("/", bodyParser.json(), async (req, res) => {
           });
 
         try {
-            await bot.sendMessage(msg.chat.id, 'can hear you');
     
             if (msg) {
 
@@ -57,6 +56,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 let userName = msg.from.username;
                 let teleData = JSON.stringify(msg);
 
+                await bot.sendMessage(msg.chat.id, 'can hear you say: ' + incoming_msg);
 
                 pool.query( 'INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
                         [user_id, firstName, secondName, userName], async function (err, result, fields) {
