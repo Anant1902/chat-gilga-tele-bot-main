@@ -55,17 +55,13 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 let userName = msg.from.username;
                 let teleData = JSON.stringify(msg);
 
-                await bot.sendMessage(msg.chat.id, 'can hear you say: ' + incoming_msg);
-
                 try {
                 await con.execute('INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
                         [user_id, firstName, secondName, userName]);
-                bot.sendMessage(msg.chat.id, '1 user id record inserted')
                 } catch (error) {console.log("Execution error: " + error)};
 
                 await con.execute("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
                         [user_id, userName, incoming_msg, teleData]);
-                bot.sendMessage(msg.chat.id, "1 user message record inserted");
 
                 const [result, field] =  await con.execute("SELECT LAST_INSERT_ID() AS id");
                 const id = result[0].id.toString();
