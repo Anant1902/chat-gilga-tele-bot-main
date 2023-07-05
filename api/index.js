@@ -35,7 +35,8 @@ app.post("/", bodyParser.json(), async (req, res) => {
             database: process.env.db_db,
             port: process.env.PORT,
             waitForConnections: true,
-            queueLimit: 0
+            queueLimit: 0,
+            connectTimeout: 1000000
           });
           
           con.connect(async function(err, con) {
