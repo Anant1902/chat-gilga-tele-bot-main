@@ -83,14 +83,14 @@ app.post("/", bodyParser.json(), async (req, res) => {
                     }
                 );
                 console.log(msgArr);
-                const ans = await connectAI(msgArr);
-
-                await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]).then(
-                    async () => {
-                        await bot.sendMessage(msg.chat.id, ans);
-                    }
-                );
-                await con.end();
+                await connectAI(msgArr).then(async (ans) => {
+                    await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]).then(
+                        async () => {
+                            await bot.sendMessage(msg.chat.id, ans);
+                            await con.end();
+                        })
+                    });
+                
             } else {
                 res.json({
                     status: "no data sent"
