@@ -51,12 +51,14 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 let teleData = JSON.stringify(msg);
 
                 try {
-                await con.execute("INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()",
+                await con.execute("INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES ( ?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=NOW()",
                         [user_id, firstName, secondName, userName]);
-                } catch (error) {console.log("Execution error: " + error)};
+                } catch (error) {console.log("Insert user execution error: " + error)};
 
+                try {
                 await con.execute("INSERT INTO messages (teleID, username, userMessage, timeStamp, robotMessage, teleData) VALUES ( ?, ?, ?, NOW(), null, ?)",
                         [user_id, userName, incoming_msg, teleData]);
+                } catch (error) {console.log("Insert message execution error: " + error)}
 
                 const [result, field] =  await con.execute("SELECT LAST_INSERT_ID() AS id");
                 const id = result[0].id.toString();
