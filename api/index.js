@@ -6,6 +6,7 @@ require('dotenv').config();
 const mysql = require('mysql2/promise');
 const TelegramBot = require('node-telegram-bot-api');
 const bodyParser = require('body-parser');
+const axios = require('axios');
 
 app.use(express.static('public'))
 
@@ -40,7 +41,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
             });
 
         try {
-    
+
             if (msg) {
 
                 let user_id = msg.from.id;
@@ -49,6 +50,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 let secondName = (msg.from.second_name !== undefined) ? msg.from.second_name : null;
                 let userName = msg.from.username;
                 let teleData = JSON.stringify(msg);
+
 
                 try {
                     
@@ -86,14 +88,28 @@ app.post("/", bodyParser.json(), async (req, res) => {
                     }
                 );
                 console.log(msgArr);
-                await connectAI(msgArr).then(async (ans) => {
-                    await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]).then(
-                        async () => {
-                            await bot.sendMessage(msg.chat.id, ans);
-                            await bot.sendPhoto(msg.chat.id,"https://www.somesite.com/image.jpg" );
-                            await con.end();
+
+                if (incoming_msg === 'What is the price of Bitcoin right now?') {
+                    axios.get('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+                        .then( async function (response) {
+                            await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?",
+                                            [response.body.price.toString(), id]).then(
+                                async () => {
+                                     // handle success
+                                    await bot.sendMessage(msg.chat.id, response.body.price);
+                                })
                         })
-                    });
+                } else {
+                    await connectAI(msgArr).then(async (ans) => {
+                        await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]).then(
+                            async () => {
+                                await bot.sendMessage(msg.chat.id, ans);
+                                await bot.sendPhoto(msg.chat.id,"https://www.somesite.com/image.jpg" );
+                                await con.end();
+                            })
+                        });
+                }
+                
                 
             } else {
                 res.json({
