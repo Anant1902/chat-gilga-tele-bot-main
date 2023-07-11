@@ -104,7 +104,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
                         await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?", [ans, id]).then(
                             async () => {
                                 await bot.sendMessage(msg.chat.id, ans);
-                                await bot.sendPhoto(msg.chat.id,"https://www.somesite.com/image.jpg" );
+                                // await bot.sendPhoto(msg.chat.id,"https://www.somesite.com/image.jpg" );
                                 await con.end();
                             })
                         });
