@@ -22,7 +22,6 @@ app.get("/test", (req, res) => {
     })
 });
 
-
 app.post("/", bodyParser.json(), async (req, res) => {
     try {
         const bot = new TelegramBot(process.env.tele_API_token);
@@ -90,14 +89,14 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 console.log(msgArr);
 
                 if (incoming_msg === 'What is the price of Bitcoin right now?') {
+
                     axios.get('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
                         .then( async function (response) {
-                            console.log(response.body.price.toString());
                             await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?",
-                                            [response.body.price.toString(), id]).then(
+                                            [response.data.price.toString(), id]).then(
                                 async () => {
                                      // handle success
-                                    await bot.sendMessage(msg.chat.id, response.body.price.toString());
+                                    await bot.sendMessage(msg.chat.id, response.data.price.toString());
                                 })
                         })
                 } else {

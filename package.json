@@ -14,7 +14,7 @@
     "mysql2": "^3.4.3",
     "node-cron": "^3.0.2",
     "node-telegram-bot-api": "^0.61.0",
-    "nodemon": "^1.14.9",
+    "nodemon": "^1.19.4",
     "openai": "^3.3.0",
     "uuid": "^9.0.0"
   },
