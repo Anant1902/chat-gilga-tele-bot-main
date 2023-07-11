@@ -92,11 +92,12 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 if (incoming_msg === 'What is the price of Bitcoin right now?') {
                     axios.get('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
                         .then( async function (response) {
+                            console.log(response.body.price.toString());
                             await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?",
                                             [response.body.price.toString(), id]).then(
                                 async () => {
                                      // handle success
-                                    await bot.sendMessage(msg.chat.id, response.body.price);
+                                    await bot.sendMessage(msg.chat.id, response.body.price.toString());
                                 })
                         })
                 } else {
