@@ -90,7 +90,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
 
                 if (incoming_msg === 'What is the price of Apple right now?') {
 
-                    axios.get('https://finnhub.io/api/v1/quote?symbol=AAPL&token=cimffbpr01qlsedscpj0cimffbpr01qlsedscpjg')
+                    await axios.get('https://finnhub.io/api/v1/quote?symbol=AAPL&token=cimffbpr01qlsedscpj0cimffbpr01qlsedscpjg')
                         .then( async function (response) {
                             await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?",
                                             [response.data.c.toString(), id]).then(
