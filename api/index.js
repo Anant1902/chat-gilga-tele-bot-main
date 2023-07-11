@@ -51,7 +51,7 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 let teleData = JSON.stringify(msg);
 
                 try {
-                await con.execute('INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()',
+                await con.execute("INSERT INTO users (teleID, firstName, secondName, userName, dateFirst, dateLast) VALUES (?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE dateLast=now()",
                         [user_id, firstName, secondName, userName]);
                 } catch (error) {console.log("Execution error: " + error)};
 
