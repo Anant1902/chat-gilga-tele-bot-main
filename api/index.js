@@ -88,15 +88,15 @@ app.post("/", bodyParser.json(), async (req, res) => {
                 );
                 console.log(msgArr);
 
-                if (incoming_msg === 'What is the price of Bitcoin right now?') {
+                if (incoming_msg === 'What is the price of Apple right now?') {
 
-                    axios.get('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+                    axios.get('https://finnhub.io/api/v1/quote?symbol=AAPL&token=cimffbpr01qlsedscpj0cimffbpr01qlsedscpjg')
                         .then( async function (response) {
                             await con.execute("UPDATE messages SET timeStamp = NOW(), robotMessage =? WHERE id=?",
-                                            [response.data.price.toString(), id]).then(
+                                            [response.data.c.toString(), id]).then(
                                 async () => {
                                      // handle success
-                                    await bot.sendMessage(msg.chat.id, response.data.price.toString());
+                                    await bot.sendMessage(msg.chat.id, response.data.c.toString());
                                 })
                         })
                 } else {
