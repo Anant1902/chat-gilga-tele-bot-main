@@ -45,8 +45,8 @@ app.post("/", bodyParser.json(), async (req, res) => {
 
                 let user_id = msg.from.id;
                 let incoming_msg = msg.text.toString()
-                let firstName = msg.from.first_name;
-                let secondName = msg.from.last_name;
+                let firstName = (msg.from.first_name !== undefined) ? msg.from.first_name : null;
+                let secondName = (msg.from.second_name !== undefined) ? msg.from.second_name : null;
                 let userName = msg.from.username;
                 let teleData = JSON.stringify(msg);
 
